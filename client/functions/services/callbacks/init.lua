@@ -18,5 +18,9 @@ function ESX.TriggerServerCallback(name, cb, ...)
     result = { result }
   end
 
-  cb(table.unpack(result))
+  if cb then
+    cb(table.unpack(result))
+  else
+    return table.unpack(result)
+  end
 end

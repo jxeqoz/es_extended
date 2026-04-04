@@ -34,7 +34,7 @@ function ExtendedPlayer:setGroup(newGroup)
 
   Player(self.source).state:set('group', self.group, true)
 
-  ExecuteCommand(('remove_principal identifier.%s group.%s'):format(self.license, self.group))
+  ExecuteCommand(('remove_principal identifier.%s group.%s'):format(self.license, lastGroup))
   ExecuteCommand(('add_principal identifier.%s group.%s'):format(self.license, self.group))
 end
 

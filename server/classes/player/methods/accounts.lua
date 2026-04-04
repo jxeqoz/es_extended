@@ -103,7 +103,7 @@ function ExtendedPlayer:removeAccountMoney(name, money)
 
     if account then
       money = account.round and lib.math.round(money) or money
-      if self.accounts[name].money - money > self.accounts[name].money then
+      if money > self.accounts[name].money then
         error(('Tried To Underflow Account ^5%s^1 For Player ^5%s^1!'):format(name, self.playerId))
         return
       end

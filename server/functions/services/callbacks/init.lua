@@ -24,6 +24,8 @@ function ESX.RegisterServerCallback(name, cb)
       p:resolve()
     end, table.unpack(args))
 
+    Citizen.Await(p)
+
     return table.unpack(result)
   end)
 end

@@ -43,16 +43,18 @@ local function debugClientLog(action, name, extra)
 end
 
 local function findEntry(collection, name)
-  if (hybridType == true or hybridType == 'hash') and collection[name] then
+  if hybridType == 'hash' then
     return collection[name]
   end
 
-  if hybridType == true or hybridType == 'numeric' then
-    for index, entry in ipairs(collection) do
-      if entry.name == name then
-        return entry, index
-      end
+  for index, entry in ipairs(collection) do
+    if entry.name == name then
+      return entry, index
     end
+  end
+
+  if hybridType == true and collection[name] then
+    return collection[name]
   end
 end
 
@@ -99,21 +101,48 @@ end
     }
   end
 
+  local sortedItems = {}
+  for _, item in pairs(Core.Items) do
+    sortedItems[#sortedItems + 1] = item
+  end
+  table.sort(sortedItems, function(a, b)
+    if a.label and b.label then return a.label < b.label end
+    return a.name < b.name
+  end)
+
+  local function applyHybridMetatable(tbl)
+    if hybridType ~= true then return tbl end
+    local hash = {}
+    for _, v in ipairs(tbl) do
+      if type(v) == 'table' and v.name then hash[v.name] = v end
+    end
+    return setmetatable(tbl, {
+      __index = function(t, k)
+        if type(k) == 'string' then return hash[k] end
+      end,
+      __newindex = function(t, k, v)
+        if type(k) == 'string' then
+          hash[k] = v
+        else
+          rawset(t, k, v)
+        end
+      end
+    })
+  end
+
   local itemIndex = 0
   ---@type table<string, DEX.Item>
   local newInventory = {}
-  for name, item in pairs(Core.Items) do
+  for _, item in ipairs(sortedItems) do
     itemIndex += 1
+    local name = item.name
     local itemData = lib.table.deepclone(item)
     itemData.count = (inventoryServerCount[name] or { count = 0 }).count or 0
     itemData.usable = (inventoryServerCount[name] or { usable = false }).usable or false
 
-    if hybridType == true then
+    if hybridType == 'hash' then
       newInventory[name] = itemData
-      newInventory[itemIndex] = itemData
-    elseif hybridType == 'hash' then
-      newInventory[name] = itemData
-    elseif hybridType == 'numeric' then
+    else
       newInventory[itemIndex] = itemData
     end
   end
@@ -124,12 +153,9 @@ end
   for _, account in ipairs(xPlayer.accounts) do
     accountIndex += 1
 
-    if hybridType == true then
+    if hybridType == 'hash' then
       newAccounts[account.name] = account
-      newAccounts[accountIndex] = account
-    elseif hybridType == 'hash' then
-      newAccounts[account.name] = account
-    elseif hybridType == 'numeric' then
+    else
       newAccounts[accountIndex] = account
     end
   end
@@ -140,19 +166,40 @@ end
   for _, weapon in ipairs(xPlayer.loadout) do
     loadoutIndex += 1
 
-    if hybridType == true then
+    if hybridType == 'hash' then
       newLoadout[weapon.name] = weapon
-      newLoadout[loadoutIndex] = weapon
-    elseif hybridType == 'hash' then
-      newLoadout[weapon.name] = weapon
-    elseif hybridType == 'numeric' then
+    else
       newLoadout[loadoutIndex] = weapon
     end
   end
 
-  ESX.PlayerData.inventory = lib.table.deepclone(newInventory)
-  ESX.PlayerData.accounts = lib.table.deepclone(newAccounts)
-  ESX.PlayerData.loadout = lib.table.deepclone(newLoadout)
+  ESX.PlayerData.inventory = hybridType == true and applyHybridMetatable(newInventory) or newInventory
+  ESX.PlayerData.accounts = hybridType == true and applyHybridMetatable(newAccounts) or newAccounts
+  ESX.PlayerData.loadout = hybridType == true and applyHybridMetatable(newLoadout) or newLoadout
+
+  local function createIndexHelper(collection)
+    return {
+      getIndex = function(name)
+        for i, v in ipairs(collection) do
+          if v.name == name then return i end
+        end
+        return nil
+      end,
+      setIndex = function() end, -- dummy
+      reloadIndexes = function() end, -- dummy
+    }
+  end
+
+  local legacyIndexHelpers = {
+    item = createIndexHelper(ESX.PlayerData.inventory),
+    account = createIndexHelper(ESX.PlayerData.accounts)
+  }
+
+  setmetatable(ESX.PlayerData, {
+    __index = function(t, k)
+      return legacyIndexHelpers[k]
+    end
+  })
 
   ESX.SpawnPlayer(ESX.PlayerData.skin, ESX.PlayerData.coords, function()
     TriggerEvent('esx:onPlayerSpawn')

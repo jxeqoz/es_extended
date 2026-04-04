@@ -97,15 +97,14 @@ function ExtendedPlayer:constructor(playerId, identifier, group, accounts, inven
   for _, weapon in ipairs(loadout) do
     self.loadout[weapon.name] = weapon
   end
-
+  -- not unpack data
   for k, v in pairs(ExtendedPlayer) do
     if type(v) == 'function' and k ~= 'constructor' then
-      self[k] = function(...)
-        local args = { ... }
-        if args[1] == self then
-          return v(table.unpack(args))
+      self[k] = function(firstArg, ...)
+        if firstArg == self then
+          return v(firstArg, ...)
         else
-          return v(self, table.unpack(args))
+          return v(self, firstArg, ...)
         end
       end
     end

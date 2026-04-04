@@ -34,7 +34,7 @@ function ExtendedPlayer:getLoadout(minimal)
         loadout[weapon.name].tintIndex = weapon.tintIndex
       end
 
-      if #weapon.components > 0 then
+      if weapon.components and #weapon.components > 0 then
         local components = {}
 
         for _, component in ipairs(weapon.components) do

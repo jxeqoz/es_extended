@@ -95,7 +95,7 @@ function Core.SavePlayers(cb)
     return
   end
 
-  local startTime = os.time()
+  local startTime = GetGameTimer()
   local parameters = {}
 
   for _, xPlayer in pairs(ESX.Players) do
@@ -140,7 +140,7 @@ function Core.SavePlayers(cb)
         ('[^2INFO^7] Saved ^5%s^7 %s over ^5%s^7 ms'):format(
           #parameters,
           #parameters > 1 and 'players' or 'player',
-          lib.math.round((os.time() - startTime) / 1000000, 2)
+          lib.math.round(GetGameTimer() - startTime, 2)
         )
       )
     end
