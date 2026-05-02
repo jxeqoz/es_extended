@@ -77,11 +77,12 @@ local function refreshPlayerInventories()
       end
     end
 
-    xPlayer.inventory = {}
+    local inventory = {}
+    local inventoryClient = {}
     local itemIndex = 0
     for itemName, itemData in pairs(ESX.Items) do
       itemIndex += 1
-      xPlayer.inventory[itemIndex] = {
+      local item = {
         name = itemName,
         count = minimalInv[itemName] or 0,
         limit = itemData.limit,
@@ -90,9 +91,12 @@ local function refreshPlayerInventories()
         canRemove = itemData.canRemove,
         label = itemData.label,
       }
+      inventory[itemName] = item
+      inventoryClient[itemIndex] = item
     end
 
-    TriggerClientEvent('esx:setInventory', xPlayer.source, xPlayer.inventory)
+    xPlayer.inventory = inventory
+    TriggerClientEvent('esx:setInventory', xPlayer.source, inventoryClient)
   end
 end
 
@@ -100,7 +104,7 @@ end
 function ESX.RefreshItems()
   ESX.Items = {}
 
-  local items = MySQL.query.await('SELECT * FROM items')
+  local items = MySQL.query.await('SELECT * FROM items') or {}
   local itemCount = #items
   for i = 1, itemCount do
     local item = items[i]
@@ -113,16 +117,10 @@ function ESX.RefreshItems()
     }
   end
 
-  local previousItems = lib.loadJson('db.items')
+  local previousItems = lib.loadJson('db.items') or {}
   if not lib.table.matches(previousItems, ESX.Items) then
     SaveResourceFile(cache.resource, 'db/items.json', json.encode(ESX.Items), -1)
-
-    CreateThread(function()
-      while true do
-        Wait(1000)
-        lib.print.info('Base of server has detected that something changes in ESX.Items please restart server one time!')
-      end
-    end)
+    lib.print.info('ESX.Items changed; db/items.json has been refreshed from the items table.')
   end
 
   refreshPlayerInventories()

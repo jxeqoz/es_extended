@@ -15,14 +15,14 @@
 ---@return DEX.Account[] | table<string, integer>
 ---@overload fun(minimal?: boolean): DEX.Account[] | table<string, integer>
 function ExtendedPlayer:getAccounts(minimal)
-  if not minimal then
-    return self.accounts
-  end
-
   local minimalAccounts = {}
 
   for name, acount in pairs(self.accounts) do
-    minimalAccounts[name] = acount.money
+    if minimal then
+      minimalAccounts[name] = acount.money
+    else
+      minimalAccounts[#minimalAccounts + 1] = acount
+    end
   end
 
   return minimalAccounts
@@ -129,20 +129,20 @@ end
 ---@overload fun(money: integer)
 function ExtendedPlayer:setMoney(money)
   assert(type(money) == 'number', 'money should be number!')
-  money = math.round(money)
+  money = lib.math.round(money)
   self:setAccountMoney('money', money)
 end
 
 ---@param money number
 ---@overload fun(money: integer)
 function ExtendedPlayer:addMoney(money)
-  money = math.round(money)
+  money = lib.math.round(money)
   self:addAccountMoney('money', money)
 end
 
 ---@param money number
 ---@overload fun(money: integer)
 function ExtendedPlayer:removeMoney(money)
-  money = math.round(money)
+  money = lib.math.round(money)
   self:removeAccountMoney('money', money)
 end

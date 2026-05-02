@@ -388,10 +388,6 @@ ESX.RegisterCommand(
     if not args.playerId then
       args.playerId = xPlayer.source
     end
-    if args.group == 'superadmin' then
-      args.group = 'admin'
-      lib.print.info('[^3WARNING^7] ^5Superadmin^7 detected, setting group to ^5admin^7')
-    end
     args.playerId:setGroup(args.group)
   end,
   true,

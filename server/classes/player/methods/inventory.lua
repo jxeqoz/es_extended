@@ -37,7 +37,12 @@ function ExtendedPlayer:getInventory(minimal)
     return minimalInventory
   end
 
-  return self.inventory
+  local inventory = {}
+  for _, v in pairs(self.inventory) do
+    inventory[#inventory + 1] = v
+  end
+
+  return inventory
 end
 
 ---@param name string
@@ -138,10 +143,9 @@ end
 ---@return DEX.Item | false, number?
 ---@overload fun(name: string): DEX.Item | false, number?
 function ExtendedPlayer:hasItem(name)
-  for _, v in ipairs(self.inventory) do
-    if v.name == name and v.count >= 1 then
-      return v, v.count
-    end
+  local item = self:getInventoryItem(name)
+  if item and item.count >= 1 then
+    return item, item.count
   end
 
   return false

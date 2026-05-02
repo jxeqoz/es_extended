@@ -230,6 +230,29 @@ function ORM:createTableIfNotExists(tableName, columns)
   return true and (err.warningStatus or 0) == 0
 end
 
+---@param tableName string The name of the table to update.
+---@param columns table A table defining columns, e.g. { { name = "username", type = "VARCHAR(255)" } }
+---@return boolean success
+function ORM:ensureColumns(tableName, columns)
+  local success = true
+  for _, col in ipairs(columns) do
+    if col.name and col.type then
+      local columnSuccess = pcall(function()
+        local exists = MySQL.scalar.await(('SHOW COLUMNS FROM `%s` LIKE ?'):format(tableName), { col.name })
+        if not exists then
+          MySQL.query.await(('ALTER TABLE `%s` ADD COLUMN `%s` %s'):format(tableName, col.name, col.type))
+        end
+      end)
+
+      if not columnSuccess then
+        success = false
+      end
+    end
+  end
+
+  return success
+end
+
 ---Drops/removes a table from the database.
 ---@param tableName string The name of the table to drop.
 ---@param ifExists? boolean Optional flag to use IF EXISTS clause (default: true).

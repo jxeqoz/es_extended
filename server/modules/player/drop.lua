@@ -15,7 +15,7 @@
 ---@param reason string
 ---@param cb function?
 return function(source, reason, cb)
-  local p = not cb and promise:new()
+  local p = not cb and promise.new()
   local function resolve()
     if cb then
       return cb()

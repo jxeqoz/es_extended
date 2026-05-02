@@ -37,9 +37,16 @@ local function decodeStoredTable(value)
     return {}
   end
 
-  local decoded = json.decode(value)
+  local ok, decoded = pcall(json.decode, value)
+  if not ok then
+    return {}
+  end
+
   if type(decoded) == 'string' then
-    decoded = json.decode(decoded)
+    ok, decoded = pcall(json.decode, decoded)
+    if not ok then
+      return {}
+    end
   end
 
   return type(decoded) == 'table' and decoded or {}
@@ -161,12 +168,7 @@ return function(identifier, source, isNew)
   end
 
   if result.group then
-    if result.group == 'superadmin' then
-      userData.group = 'admin'
-      lib.print.warn('[^3WARNING^7] ^5Superadmin^7 detected, setting group to ^5admin^7')
-    else
-      userData.group = result.group
-    end
+    userData.group = result.group
   else
     userData.group = 'user'
   end
@@ -200,9 +202,17 @@ return function(identifier, source, isNew)
     )
   end
 
-  userData.coords = json.decode(result.position) or public.spawn_points[ESX.Math.Random(1, #public.spawn_points)]
-  userData.skin = (result.skin and result.skin ~= '') and json.decode(result.skin) or { sex = userData.sex == 'f' and 1 or 0 }
-  userData.metadata = (result.metadata and result.metadata ~= '') and json.decode(result.metadata) or {}
+  userData.coords = decodeStoredTable(result.position)
+  if not next(userData.coords) then
+    userData.coords = public.spawn_points[ESX.Math.Random(1, #public.spawn_points)]
+  end
+
+  userData.skin = decodeStoredTable(result.skin)
+  if not next(userData.skin) then
+    userData.skin = { sex = userData.sex == 'f' and 1 or 0 }
+  end
+
+  userData.metadata = decodeStoredTable(result.metadata)
 
   local xPlayer = player:new(
     source,
@@ -249,8 +259,7 @@ return function(identifier, source, isNew)
   userData.money = xPlayer:getMoney()
   userData.variables = xPlayer.variables or {}
 
-  local extendedPlayer = GetPlayerExtended(source)
-  TriggerEvent('esx:playerLoaded', source, extendedPlayer, isNew)
+  TriggerEvent('esx:playerLoaded', source, xPlayer, isNew)
 
   --- Cleanup before send to client
   userData.inventoryServer = nil
@@ -266,7 +275,7 @@ return function(identifier, source, isNew)
   userData.group = nil
 
   xPlayer:triggerEvent('esx:playerLoaded', userData, isNew)
-  xPlayer:triggerEvent('esx:registerSuggestions', Core.RegisteredCommands)
+  -- xPlayer:triggerEvent('esx:registerSuggestions', Core.RegisteredCommands)
 
   lib.print.info(('[^2INFO^0] Player ^5"%s"^0 has connected to the server. ID: ^5%s^7'):format(xPlayer:getName(), source))
 end

@@ -18,6 +18,13 @@ CREATE TABLE `users` (
 	`loadout` LONGTEXT NULL DEFAULT NULL,
 	`metadata` LONGTEXT NULL DEFAULT NULL,
 	`position` longtext NULL DEFAULT NULL,
+	`firstname` VARCHAR(50) NULL DEFAULT NULL,
+	`lastname` VARCHAR(50) NULL DEFAULT NULL,
+	`dateofbirth` VARCHAR(50) NULL DEFAULT NULL,
+	`sex` VARCHAR(50) NULL DEFAULT NULL,
+	`height` INT(11) NULL DEFAULT NULL,
+	`skin` LONGTEXT NULL DEFAULT NULL,
+	`phone_number` VARCHAR(50) NULL DEFAULT NULL,
 
 	PRIMARY KEY (`identifier`)
 ) ENGINE=InnoDB;
@@ -38,11 +45,14 @@ CREATE TABLE `job_grades` (
 	`grade` INT NOT NULL,
 	`name` VARCHAR(50) NOT NULL,
 	`label` VARCHAR(50) NOT NULL,
+	`salary` INT NOT NULL DEFAULT 0,
+	`skin_male` LONGTEXT NULL DEFAULT NULL,
+	`skin_female` LONGTEXT NULL DEFAULT NULL,
 
 	PRIMARY KEY (`id`)
 ) ENGINE=InnoDB;
 
-INSERT INTO `job_grades` VALUES (1,'unemployed',0,'unemployed','Unemployed');
+INSERT INTO `job_grades` VALUES (1,'unemployed',0,'unemployed','Unemployed',0,'{}','{}');
 
 CREATE TABLE `jobs` (
 	`name` VARCHAR(50) NOT NULL,

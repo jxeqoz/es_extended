@@ -84,6 +84,10 @@ function ExtendedPlayer:setMeta(index, value, subValue)
       return error(('xPlayer.setMeta ^5%s^1 should be ^5number^1 or ^5string^1 or ^5table^1!'):format(value))
     end
 
+    if self.metadata[index] == value then
+      return
+    end
+
     self.metadata[index] = value
   else
     if _type ~= 'string' then
@@ -95,6 +99,10 @@ function ExtendedPlayer:setMeta(index, value, subValue)
     end
 
     self.metadata[index] = type(self.metadata[index]) == 'table' and self.metadata[index] or {}
+    if self.metadata[index][value] == subValue then
+      return
+    end
+
     self.metadata[index][value] = subValue
   end
 

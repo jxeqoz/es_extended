@@ -347,10 +347,11 @@ registerCallback('esx:spawnVehicle', function(source, vehData)
   local ped = GetPlayerPed(source)
   local idPromise = promise.new()
   local coords = vehData.coords or GetEntityCoords(ped)
+  local heading = vehData.heading or coords.w or coords.heading or GetEntityHeading(ped)
   ESX.OneSync.SpawnVehicle(
     vehData.model or `ADDER`,
     coords,
-    coords.w or 0.0,
+    heading,
     vehData.props or {},
     function(id)
       if vehData.warp then

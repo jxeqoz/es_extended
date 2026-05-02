@@ -16,16 +16,29 @@
 function ESX.RegisterServerCallback(name, cb)
   lib.callback.register(name, function(source, ...)
     local args = { ... }
-    local result
+    local result = {}
     local p = promise.new()
+    local resolved = false
 
-    cb(source, function(...)
-      result = { ... }
+    local returned = table.pack(cb(source, function(...)
+      result = table.pack(...)
+      if not resolved then
+        resolved = true
+        p:resolve()
+      end
+    end, table.unpack(args)))
+
+    if not resolved and returned.n > 0 then
+      result = returned
+      resolved = true
       p:resolve()
-    end, table.unpack(args))
+    end
 
     Citizen.Await(p)
 
-    return table.unpack(result)
+    return {
+      __esx_callback = true,
+      values = result,
+    }
   end)
 end

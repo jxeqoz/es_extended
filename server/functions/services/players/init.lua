@@ -12,6 +12,46 @@
 --]]
 
 local public = require('settings.public')
+local SAVE_QUERY =
+  'UPDATE `users` SET `accounts` = ?, `job` = ?, `job_grade` = ?, `group` = ?, `position` = ?, `inventory` = ?, `loadout` = ?, `metadata` = ? WHERE `identifier` = ?'
+local SAVE_BATCH_SIZE = math.max(GetConvarInt('esx_save_batch_size', 500), 1)
+
+local function executeSaveBatches(parameters, cb)
+  local total = #parameters
+  if total == 0 then
+    return cb(true)
+  end
+
+  if total <= SAVE_BATCH_SIZE then
+    return MySQL.prepare(SAVE_QUERY, parameters, cb)
+  end
+
+  local offset = 1
+  local function saveNextBatch()
+    local batch = {}
+    local last = math.min(offset + SAVE_BATCH_SIZE - 1, total)
+
+    for i = offset, last do
+      batch[#batch + 1] = parameters[i]
+    end
+
+    offset = last + 1
+
+    MySQL.prepare(SAVE_QUERY, batch, function(results)
+      if not results then
+        return cb(false)
+      end
+
+      if offset <= total then
+        return saveNextBatch()
+      end
+
+      cb(true)
+    end)
+  end
+
+  saveNextBatch()
+end
 
 local function debugSaveLog(action, xPlayer)
   if not public.debug_inventory_loadout then
@@ -31,6 +71,10 @@ end
 
 local function updateHealthAndArmorInMetadata(xPlayer)
   local ped = GetPlayerPed(xPlayer.source)
+  if not ped or ped == 0 then
+    return
+  end
+
   local playerState = Player(xPlayer.source).state
 
   local isDead = playerState.isDead or false
@@ -40,9 +84,9 @@ local function updateHealthAndArmorInMetadata(xPlayer)
     isDead = 0
   end
 
-  xPlayer:setMeta('health', GetEntityHealth(ped))
-  xPlayer:setMeta('armor', GetPedArmour(ped))
-  xPlayer:setMeta('isDead', isDead)
+  xPlayer.metadata.health = GetEntityHealth(ped)
+  xPlayer.metadata.armor = GetPedArmour(ped)
+  xPlayer.metadata.isDead = isDead
 end
 
 ---@param xPlayer table
@@ -72,19 +116,15 @@ function Core.SavePlayer(xPlayer, cb)
     xPlayer.identifier,
   }
 
-  MySQL.prepare(
-    'UPDATE `users` SET `accounts` = ?, `job` = ?, `job_grade` = ?, `group` = ?, `position` = ?, `inventory` = ?, `loadout` = ?, `metadata` = ? WHERE `identifier` = ?',
-    parameters,
-    function(affectedRows)
-      if affectedRows == 1 then
-        print(('[^2INFO^7] Saved player ^5"%s^7"'):format(xPlayer.name))
-        TriggerEvent('esx:playerSaved', xPlayer.playerId, xPlayer)
-      end
-      if cb then
-        cb()
-      end
+  MySQL.prepare(SAVE_QUERY, parameters, function(affectedRows)
+    if affectedRows == 1 then
+      print(('[^2INFO^7] Saved player ^5"%s^7"'):format(xPlayer.name))
+      TriggerEvent('esx:playerSaved', xPlayer.playerId, xPlayer)
     end
-  )
+    if cb then
+      cb()
+    end
+  end)
 end
 
 ---@param cb? function
@@ -92,6 +132,9 @@ end
 function Core.SavePlayers(cb)
   local xPlayers = ESX.Players
   if not next(xPlayers) then
+    if type(cb) == 'function' then
+      cb()
+    end
     return
   end
 
@@ -124,27 +167,23 @@ function Core.SavePlayers(cb)
     }
   end
 
-  MySQL.prepare(
-    'UPDATE `users` SET `accounts` = ?, `job` = ?, `job_grade` = ?, `group` = ?, `position` = ?, `inventory` = ?, `loadout` = ?, `metadata` = ? WHERE `identifier` = ?',
-    parameters,
-    function(results)
-      if not results then
-        return
-      end
-
-      if type(cb) == 'function' then
-        return cb()
-      end
-
-      lib.print.info(
-        ('[^2INFO^7] Saved ^5%s^7 %s over ^5%s^7 ms'):format(
-          #parameters,
-          #parameters > 1 and 'players' or 'player',
-          lib.math.round(GetGameTimer() - startTime, 2)
-        )
-      )
+  executeSaveBatches(parameters, function(success)
+    if not success then
+      return
     end
-  )
+
+    if type(cb) == 'function' then
+      return cb()
+    end
+
+    lib.print.info(
+      ('[^2INFO^7] Saved ^5%s^7 %s over ^5%s^7 ms'):format(
+        #parameters,
+        #parameters > 1 and 'players' or 'player',
+        lib.math.round(GetGameTimer() - startTime, 2)
+      )
+    )
+  end)
 end
 
 ESX.GetPlayers = GetPlayers

@@ -23,7 +23,7 @@ end
 function ExtendedPlayer:setCoords(coords)
   local ped = GetPlayerPed(self.source)
   SetEntityCoords(ped, coords.x, coords.y, coords.z, false, false, false, false)
-  SetEntityHeading(ped, coords.w or 0.0)
+  SetEntityHeading(ped, coords.w or coords.heading or 0.0)
 end
 
 ---@param getVector boolean?

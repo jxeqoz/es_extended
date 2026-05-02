@@ -78,10 +78,30 @@ local function setHybridEntry(collection, name, value)
   end
 end
 
+local function applyHybridMetatable(tbl)
+  if hybridType ~= true then return tbl end
+  local hash = {}
+  for _, v in ipairs(tbl) do
+    if type(v) == 'table' and v.name then hash[v.name] = v end
+  end
+  return setmetatable(tbl, {
+    __index = function(_, k)
+      if type(k) == 'string' then return hash[k] end
+    end,
+    __newindex = function(t, k, v)
+      if type(k) == 'string' then
+        hash[k] = v
+      else
+        rawset(t, k, v)
+      end
+    end
+  })
+end
+
 @onNet('esx:playerLoaded', function(xPlayer, isNew)
   local tries = 0
   repeat
-    Core.Items = lib.loadJson('db.items')
+    Core.Items = lib.loadJson('db.items') or {}
     if ESX.Table.SizeOf(Core.Items) > 0 or tries == 50 then
       Core.ItemsLoaded = true
     end
@@ -109,26 +129,6 @@ end
     if a.label and b.label then return a.label < b.label end
     return a.name < b.name
   end)
-
-  local function applyHybridMetatable(tbl)
-    if hybridType ~= true then return tbl end
-    local hash = {}
-    for _, v in ipairs(tbl) do
-      if type(v) == 'table' and v.name then hash[v.name] = v end
-    end
-    return setmetatable(tbl, {
-      __index = function(t, k)
-        if type(k) == 'string' then return hash[k] end
-      end,
-      __newindex = function(t, k, v)
-        if type(k) == 'string' then
-          hash[k] = v
-        else
-          rawset(t, k, v)
-        end
-      end
-    })
-  end
 
   local itemIndex = 0
   ---@type table<string, DEX.Item>
@@ -177,9 +177,10 @@ end
   ESX.PlayerData.accounts = hybridType == true and applyHybridMetatable(newAccounts) or newAccounts
   ESX.PlayerData.loadout = hybridType == true and applyHybridMetatable(newLoadout) or newLoadout
 
-  local function createIndexHelper(collection)
+  local function createIndexHelper(key)
     return {
       getIndex = function(name)
+        local collection = ESX.PlayerData[key] or {}
         for i, v in ipairs(collection) do
           if v.name == name then return i end
         end
@@ -191,8 +192,8 @@ end
   end
 
   local legacyIndexHelpers = {
-    item = createIndexHelper(ESX.PlayerData.inventory),
-    account = createIndexHelper(ESX.PlayerData.accounts)
+    item = createIndexHelper('inventory'),
+    account = createIndexHelper('accounts')
   }
 
   setmetatable(ESX.PlayerData, {
@@ -238,8 +239,8 @@ end
       SetEntityHealth(cache.ped, 0)
       LocalPlayer.state:set('isDead', true, true)
     else
-      SetEntityHealth(cache.ped, ESX.PlayerData.metadata.health)
-      SetPedArmour(cache.ped, ESX.PlayerData.metadata.armor)
+      SetEntityHealth(cache.ped, tonumber(ESX.PlayerData.metadata.health) or GetEntityMaxHealth(cache.ped))
+      SetPedArmour(cache.ped, tonumber(ESX.PlayerData.metadata.armor) or 0)
     end
   end
 
@@ -250,17 +251,14 @@ end)
   local newInventory = {}
 
   for index, item in ipairs(_newInventory) do
-    if hybridType == true then
-      newInventory[index] = item
+    if hybridType == 'hash' then
       newInventory[item.name] = item
-    elseif hybridType == 'hash' then
-      newInventory[item.name] = item
-    elseif hybridType == 'numeric' then
+    else
       newInventory[index] = item
     end
   end
 
-  ESX.SetPlayerData('inventory', newInventory)
+  ESX.SetPlayerData('inventory', hybridType == true and applyHybridMetatable(newInventory) or newInventory)
 end)
 
 local function onPlayerSpawn()
@@ -381,13 +379,13 @@ end)
   ESX.SetPlayerData('group', group)
 end)
 
-@onNet('esx:registerSuggestions', function(registeredCommands)
-  for name, command in pairs(registeredCommands) do
-    if command.suggestion then
-      TriggerEvent('chat:addSuggestion', ('/%s'):format(name), command.suggestion.help, command.suggestion.arguments)
-    end
-  end
-end)
+-- @onNet('esx:registerSuggestions', function(registeredCommands)
+--   for name, command in pairs(registeredCommands) do
+--     if command.suggestion then
+--       TriggerEvent('chat:addSuggestion', ('/%s'):format(name), command.suggestion.help, command.suggestion.arguments)
+--     end
+--   end
+-- end)
 
 @onNet('esx:addInventoryItem', function(item, count)
   local itemData = findEntry(ESX.PlayerData.inventory, item)

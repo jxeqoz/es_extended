@@ -14,7 +14,7 @@
 ---@class Server.Module.Service.OneSync
 ESX.OneSync = {}
 
----@param source number|vector3
+---@param source number|vector3|vector4|table
 ---@param closest boolean
 ---@param distance? number
 ---@param ignore? table
@@ -22,7 +22,6 @@ ESX.OneSync = {}
 local function getNearbyPlayers(source, closest, distance, ignore, routingBucket)
   local result = {}
   local count = 0
-  local playerPed
   local playerCoords
   ignore = ignore or {}
 
@@ -31,25 +30,21 @@ local function getNearbyPlayers(source, closest, distance, ignore, routingBucket
   end
 
   if type(source) == 'number' then
-    playerPed = GetPlayerPed(source)
-
-    if not source then
+    local playerPed = GetPlayerPed(source)
+    if not playerPed or playerPed == 0 then
       error('Received invalid first argument (source); should be playerId')
     end
 
     playerCoords = GetEntityCoords(playerPed)
-
-    if not playerCoords then
-      error('Received nil value (playerCoords); perhaps source is nil at first place?')
-    end
-  end
-
-  if type(source) == 'vector3' then
+  elseif type(source) == 'vector3' then
     playerCoords = source
-
-    if not playerCoords then
-      error('Received nil value (playerCoords); perhaps source is nil at first place?')
+  elseif type(source) == 'vector4' or type(source) == 'table' then
+    if not source.x or not source.y or not source.z then
+      error('Received invalid coords; expected x, y and z values')
     end
+    playerCoords = vector3(source.x, source.y, source.z)
+  else
+    error(('Received invalid first argument type %s; expected playerId or coords'):format(type(source)))
   end
 
   for _, xPlayer in pairs(ESX.Players) do
@@ -77,7 +72,7 @@ local function getNearbyPlayers(source, closest, distance, ignore, routingBucket
   return result
 end
 
----@param source vector3|number playerId or vector3 coordinates
+---@param source vector3|vector4|table|number playerId or coordinates
 ---@param maxDistance number
 ---@param ignore? table playerIds to ignore, where the key is playerId and value is true
 ---@param routingBucket? number
@@ -85,7 +80,7 @@ function ESX.OneSync.GetPlayersInArea(source, maxDistance, ignore, routingBucket
   return getNearbyPlayers(source, false, maxDistance, ignore, routingBucket)
 end
 
----@param source vector3|number playerId or vector3 coordinates
+---@param source vector3|vector4|table|number playerId or coordinates
 ---@param maxDistance number
 ---@param ignore? table playerIds to ignore, where the key is playerId and value is true
 ---@param routingBucket? number
@@ -105,7 +100,7 @@ function ESX.OneSync.SpawnVehicle(vehicleModel, coords, heading, vehicleProperti
     error('Invalid callback function')
   end
 
-  vehicleModel = joaat(vehicleModel)
+  vehicleModel = type(vehicleModel) == 'number' and vehicleModel or joaat(vehicleModel)
 
   local promise = not cb and promise.new()
 

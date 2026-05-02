@@ -20,7 +20,7 @@ end
 ---@param freeze boolean Whether to freeze the player
 ---@return nil
 function Core.FreezePlayer(freeze)
-  local ped = PlayerPedId()
+  local ped = cache.ped
   SetPlayerControl(cache.playerId, not freeze, 0)
 
   if freeze then
@@ -45,19 +45,20 @@ function ESX.SpawnPlayer(skin, coords, cb)
 
   RequestCollisionAtCoord(coords.x, coords.y, coords.z)
 
-  local playerPed = PlayerPedId()
+  local playerPed = cache.ped
   local timer = GetGameTimer()
 
   Core.FreezePlayer(true)
   SetEntityCoordsNoOffset(playerPed, coords.x, coords.y, coords.z, false, false, true)
-  SetEntityHeading(playerPed, coords.heading)
+  local heading = coords.heading or coords.w or 0.0
+  SetEntityHeading(playerPed, heading)
 
   RequestCollisionAtCoord(coords.x, coords.y, coords.z)
   while not HasCollisionLoadedAroundEntity(playerPed) and (GetGameTimer() - timer) < 5000 do
     Wait(0)
   end
 
-  NetworkResurrectLocalPlayer(coords.x, coords.y, coords.z, coords.heading, 0, true)
+  NetworkResurrectLocalPlayer(coords.x, coords.y, coords.z, heading, 0, true)
   TriggerEvent('playerSpawned', coords)
 
   cb()

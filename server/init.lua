@@ -28,12 +28,12 @@ Core.DatabaseConnected = false
 Core.PlayersByIdentifier = {}
 Core.JobsLoaded = false
 Core.IdsByJobs = {}
+Core.vehicleTypesByModel = {}
 
 --- Bootstrap
 require('server.functions')
 require('server.modules')
 require('server.modules.services.commands')
-require('server.modules.services.createJob')
 require('server.modules.services.onesync')
 
 BOOTSTRAP:resolve()
@@ -51,69 +51,88 @@ end
 MySQL.ready(function()
   Core.DatabaseConnected = true
 
-  --- Install database
-  local createdUsers = orm:createTableIfNotExists('users_test', {
-    { name = 'identifier', type = 'VARCHAR(60) NOT NULL PRIMARY KEY' },
-    { name = 'accounts', type = 'LONGTEXT NULL DEFAULT NULL' },
-    { name = 'group', type = 'VARCHAR(50) NULL DEFAULT \'user\'' },
-    { name = 'inventory', type = 'LONGTEXT NULL DEFAULT NULL' },
-    { name = 'job', type = 'VARCHAR(20) NULL DEFAULT \'unemployed\'' },
-    { name = 'job_grade', type = 'INT NULL DEFAULT 0' },
-    { name = 'loadout', type = 'LONGTEXT NULL DEFAULT NULL' },
-    { name = 'metadata', type = 'LONGTEXT NULL DEFAULT NULL' },
-    { name = 'position', type = 'LONGTEXT NULL DEFAULT NULL' },
-    { name = 'firstname', type = 'VARCHAR(50) NULL DEFAULT NULL' },
-    { name = 'lastname', type = 'VARCHAR(50) NULL DEFAULT NULL' },
-    { name = 'dateofbirth', type = 'VARCHAR(50) NULL DEFAULT NULL' },
-    { name = 'sex', type = 'VARCHAR(50) NULL DEFAULT NULL' },
-    { name = 'height', type = 'INT(11) NULL DEFAULT NULL' },
-    { name = 'skin', type = 'LONGTEXT NULL DEFAULT NULL' },
-    { name = 'phone_number', type = 'VARCHAR(50) NULL DEFAULT NULL' },
-  })
+  if GetConvar('esx_auto_setup_database', 'false') == 'true' then
+    local userColumns = {
+      { name = 'identifier', type = 'VARCHAR(60) NOT NULL PRIMARY KEY' },
+      { name = 'accounts', type = 'LONGTEXT NULL DEFAULT NULL' },
+      { name = 'group', type = 'VARCHAR(50) NULL DEFAULT \'user\'' },
+      { name = 'inventory', type = 'LONGTEXT NULL DEFAULT NULL' },
+      { name = 'job', type = 'VARCHAR(20) NULL DEFAULT \'unemployed\'' },
+      { name = 'job_grade', type = 'INT NULL DEFAULT 0' },
+      { name = 'loadout', type = 'LONGTEXT NULL DEFAULT NULL' },
+      { name = 'metadata', type = 'LONGTEXT NULL DEFAULT NULL' },
+      { name = 'position', type = 'LONGTEXT NULL DEFAULT NULL' },
+      { name = 'firstname', type = 'VARCHAR(50) NULL DEFAULT NULL' },
+      { name = 'lastname', type = 'VARCHAR(50) NULL DEFAULT NULL' },
+      { name = 'dateofbirth', type = 'VARCHAR(50) NULL DEFAULT NULL' },
+      { name = 'sex', type = 'VARCHAR(50) NULL DEFAULT NULL' },
+      { name = 'height', type = 'INT(11) NULL DEFAULT NULL' },
+      { name = 'skin', type = 'LONGTEXT NULL DEFAULT NULL' },
+      { name = 'phone_number', type = 'VARCHAR(50) NULL DEFAULT NULL' },
+    }
 
-  local createdItems = orm:createTableIfNotExists('items', {
-    { name = 'name', type = 'VARCHAR(50) NOT NULL PRIMARY KEY' },
-    { name = 'label', type = 'VARCHAR(50) NOT NULL' },
-    { name = 'limit', type = 'INT NOT NULL DEFAULT -1' },
-    { name = 'rare', type = 'TINYINT NOT NULL DEFAULT 0' },
-    { name = 'can_remove', type = 'TINYINT NOT NULL DEFAULT 1' },
-  })
+    local itemColumns = {
+      { name = 'name', type = 'VARCHAR(50) NOT NULL PRIMARY KEY' },
+      { name = 'label', type = 'VARCHAR(50) NOT NULL' },
+      { name = 'limit', type = 'INT NOT NULL DEFAULT -1' },
+      { name = 'rare', type = 'TINYINT NOT NULL DEFAULT 0' },
+      { name = 'can_remove', type = 'TINYINT NOT NULL DEFAULT 1' },
+    }
 
-  local createdJobs = orm:createTableIfNotExists('jobs', {
-    { name = 'name', type = 'VARCHAR(50) NOT NULL PRIMARY KEY' },
-    { name = 'label', type = 'VARCHAR(50) DEFAULT NULL' },
-  })
+    local jobColumns = {
+      { name = 'name', type = 'VARCHAR(50) NOT NULL PRIMARY KEY' },
+      { name = 'label', type = 'VARCHAR(50) DEFAULT NULL' },
+    }
 
-  local createdJobGrades = orm:createTableIfNotExists('job_grades', {
-    { name = 'id', type = 'INT NOT NULL PRIMARY KEY AUTO_INCREMENT' },
-    { name = 'job_name', type = 'VARCHAR(50) DEFAULT NULL' },
-    { name = 'grade', type = 'INT NOT NULL' },
-    { name = 'name', type = 'VARCHAR(50) NOT NULL' },
-    { name = 'label', type = 'VARCHAR(50) NOT NULL' },
-  })
+    local jobGradeColumns = {
+      { name = 'id', type = 'INT NOT NULL PRIMARY KEY AUTO_INCREMENT' },
+      { name = 'job_name', type = 'VARCHAR(50) DEFAULT NULL' },
+      { name = 'grade', type = 'INT NOT NULL' },
+      { name = 'name', type = 'VARCHAR(50) NOT NULL' },
+      { name = 'label', type = 'VARCHAR(50) NOT NULL' },
+      { name = 'salary', type = 'INT NOT NULL DEFAULT 0' },
+      { name = 'skin_male', type = 'LONGTEXT NULL DEFAULT NULL' },
+      { name = 'skin_female', type = 'LONGTEXT NULL DEFAULT NULL' },
+    }
 
-  if createdUsers then
-    lib.print.info('Setup table [users] successfully')
-  end
+    local createdUsers = orm:createTableIfNotExists('users', userColumns)
+    orm:ensureColumns('users', userColumns)
 
-  if createdItems then
-    lib.print.info('Setup table [items] successfully')
-  end
+    local createdItems = orm:createTableIfNotExists('items', itemColumns)
+    orm:ensureColumns('items', itemColumns)
 
-  if createdJobs then
-    orm:createPrepare('jobs', { name = 'unemployed', label = 'Unemployed' })
-    lib.print.info('Setup table [jobs] successfully with inserted unemployed data')
-  end
+    local createdJobs = orm:createTableIfNotExists('jobs', jobColumns)
+    orm:ensureColumns('jobs', jobColumns)
 
-  if createdJobGrades then
-    orm:createPrepare('job_grades', {
-      id = 1,
-      job_name = 'unemployed',
-      grade = 0,
-      name = 'unemployed',
-      label = 'Unemployed',
-    })
-    lib.print.info('Setup table [job_grades] successfully with inserted unemployed data')
+    local createdJobGrades = orm:createTableIfNotExists('job_grades', jobGradeColumns)
+    orm:ensureColumns('job_grades', jobGradeColumns)
+
+    if createdUsers then
+      lib.print.info('Setup table [users] successfully')
+    end
+
+    if createdItems then
+      lib.print.info('Setup table [items] successfully')
+    end
+
+    if createdJobs then
+      orm:createPrepare('jobs', { name = 'unemployed', label = 'Unemployed' })
+      lib.print.info('Setup table [jobs] successfully with inserted unemployed data')
+    end
+
+    if createdJobGrades then
+      orm:createPrepare('job_grades', {
+        id = 1,
+        job_name = 'unemployed',
+        grade = 0,
+        name = 'unemployed',
+        label = 'Unemployed',
+        salary = 0,
+        skin_male = '{}',
+        skin_female = '{}',
+      })
+      lib.print.info('Setup table [job_grades] successfully with inserted unemployed data')
+    end
   end
 
   ESX.RefreshItems()

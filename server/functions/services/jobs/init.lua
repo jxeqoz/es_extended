@@ -41,12 +41,15 @@ function ESX.RefreshJobs()
     end
   end
 
-  if not Jobs then
-    ESX.Jobs['unemployed'] = {
-      name = 'unemployed',
-      label = 'Unemployed',
-      grades = { ['0'] = { grade = 0, name = 'unemployed', label = 'Unemployed', salary = 200, skin_male = {}, skin_female = {} } },
+  if not next(Jobs) then
+    ESX.Jobs = {
+      unemployed = {
+        name = 'unemployed',
+        label = 'Unemployed',
+        grades = { ['0'] = { grade = 0, name = 'unemployed', label = 'Unemployed', salary = 200, skin_male = {}, skin_female = {} } },
+      },
     }
+    Core.IdsByJobs['unemployed'] = {}
   else
     ESX.Jobs = Jobs
   end

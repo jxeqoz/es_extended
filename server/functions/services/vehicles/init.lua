@@ -33,6 +33,7 @@ function ESX.GetVehicleType(model, player, cb)
   end
 
   model = type(model) == 'string' and joaat(model) or model
+  Core.vehicleTypesByModel = Core.vehicleTypesByModel or {}
 
   if Core.vehicleTypesByModel[model] then
     return resolve(Core.vehicleTypesByModel[model])

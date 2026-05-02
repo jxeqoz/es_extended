@@ -75,7 +75,6 @@ function ExtendedPlayer:constructor(playerId, identifier, group, accounts, inven
   self.admin = Core.IsPlayerAdmin(playerId)
   self.license = identifier
 
-  lib.print.info(('[CLASS] identifier=%s group=%s'):format(self.license, self.group))
   ExecuteCommand(('add_principal identifier.%s group.%s'):format(self.license, self.group))
 
   local stateBag = Player(self.source).state
