@@ -72,7 +72,7 @@ function ExtendedPlayer:addWeapon(name, ammo)
 
     debugLoadoutLog(self, 'addWeapon', name, ('ammo=%s'):format(ammo))
     GiveWeaponToPed(GetPlayerPed(self.source), joaat(name), ammo, false, false)
-    self:triggerEvent('esx:addLoadoutItem', name, weaponLabel, ammo)
+    self:triggerEvent('esx:addWeapon', name, weaponLabel, ammo)
   end
 end
 
@@ -185,7 +185,7 @@ function ExtendedPlayer:removeWeapon(name)
   end
 
   if weaponLabel then
-    self:triggerEvent('esx:removeLoadoutItem', name, weaponLabel)
+    self:triggerEvent('esx:removeWeapon', name, weaponLabel)
   end
 end
 

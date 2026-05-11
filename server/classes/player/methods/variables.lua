@@ -55,6 +55,7 @@ end
 function ExtendedPlayer:setName(newName)
   self.name = newName
   Player(self.source).state:set('name', newName)
+  TriggerEvent('nc:setPlayerName', self.source, self.name)
 end
 
 ---@return integer

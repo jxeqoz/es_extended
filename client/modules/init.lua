@@ -413,7 +413,7 @@ end)
   ESX.SetPlayerData('inventory', ESX.PlayerData.inventory)
 end)
 
-@onNet('esx:addLoadoutItem', function(weaponName, weaponLabel, ammo)
+@onNet('esx:addWeapon', function(weaponName, weaponLabel, ammo)
   local data = {
     name = weaponName,
     ammo = ammo,
@@ -434,10 +434,10 @@ end)
   ESX.SetPlayerData('loadout', ESX.PlayerData.loadout)
 end)
 
-@onNet('esx:removeLoadoutItem', function(weaponName, weaponLabel)
+@onNet('esx:removeWeapon', function(weaponName, weaponLabel)
   local currentWeapon = findEntry(ESX.PlayerData.loadout, weaponName)
   if not currentWeapon then
-    lib.print.error(('Error during esx:removeLoadoutItem %s %s'):format(weaponName, weaponLabel))
+    lib.print.error(('Error during esx:removeWeapon %s %s'):format(weaponName, weaponLabel))
     return
   end
 
