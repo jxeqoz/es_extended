@@ -102,7 +102,8 @@ local heading = 0
 
 local function noclipThread()
   while noclip do
-    SetEntityCoordsNoOffset(cache.ped, noclipPos.x, noclipPos.y, noclipPos.z, false, false, true)
+    local ped = cache.ped
+    SetEntityCoordsNoOffset(ped, noclipPos.x, noclipPos.y, noclipPos.z, false, false, true)
 
     if IsControlPressed(1, 34) then
       heading = heading + 1.5
@@ -110,7 +111,7 @@ local function noclipThread()
         heading = 0
       end
 
-      SetEntityHeading(cache.ped, heading)
+      SetEntityHeading(ped, heading)
     end
 
     if IsControlPressed(1, 9) then
@@ -119,23 +120,23 @@ local function noclipThread()
         heading = 360
       end
 
-      SetEntityHeading(cache.ped, heading)
+      SetEntityHeading(ped, heading)
     end
 
     if IsControlPressed(1, 8) then
-      noclipPos = GetOffsetFromEntityInWorldCoords(cache.ped, 0.0, 1.0, 0.0)
+      noclipPos = GetOffsetFromEntityInWorldCoords(ped, 0.0, 1.0, 0.0)
     end
 
     if IsControlPressed(1, 32) then
-      noclipPos = GetOffsetFromEntityInWorldCoords(cache.ped, 0.0, -1.0, 0.0)
+      noclipPos = GetOffsetFromEntityInWorldCoords(ped, 0.0, -1.0, 0.0)
     end
 
     if IsControlPressed(1, 27) then
-      noclipPos = GetOffsetFromEntityInWorldCoords(cache.ped, 0.0, 0.0, 1.0)
+      noclipPos = GetOffsetFromEntityInWorldCoords(ped, 0.0, 0.0, 1.0)
     end
 
     if IsControlPressed(1, 173) then
-      noclipPos = GetOffsetFromEntityInWorldCoords(cache.ped, 0.0, 0.0, -1.0)
+      noclipPos = GetOffsetFromEntityInWorldCoords(ped, 0.0, 0.0, -1.0)
     end
     Wait(0)
   end

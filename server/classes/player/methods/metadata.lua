@@ -98,7 +98,6 @@ function ExtendedPlayer:setMeta(index, value, subValue)
       self.metadata[index] = {}
     end
 
-    self.metadata[index] = type(self.metadata[index]) == 'table' and self.metadata[index] or {}
     if self.metadata[index][value] == subValue then
       return
     end

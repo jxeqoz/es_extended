@@ -16,9 +16,6 @@ local M = {}
 
 local _round = lib.math.round
 
-M = {}
-M._index = M
-
 function M:ResetValues()
   self.killerEntity = nil
   self.deathCause = nil

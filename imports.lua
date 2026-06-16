@@ -29,8 +29,8 @@ else
   local function createStaticPlayer(src)
     return setmetatable({ src = src }, {
       __index = function(self, key)
-        if mapKeyMethods[key] then
-          local methodName = mapKeyMethods[key]
+        local methodName = mapKeyMethods[key]
+        if methodName then
           return exports.es_extended:runStaticPlayerMethod(self.src, methodName)
         end
 

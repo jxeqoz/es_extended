@@ -129,7 +129,8 @@ return function(identifier, source, isNew)
     job, grade = 'unemployed', '0'
   end
 
-  local jobObject, gradeObject = ESX.Jobs[job], ESX.Jobs[job].grades[grade]
+  local jobObject = ESX.Jobs[job]
+  local gradeObject = jobObject.grades[grade]
 
   userData.job = {
     id = jobObject.id,

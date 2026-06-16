@@ -129,7 +129,7 @@ end
 
 ---@param cb? function
 ---@return nil
-function Core.SavePlayers(cb)
+function Core.SavePlayers(cb, smooth)
   local xPlayers = ESX.Players
   if not next(xPlayers) then
     if type(cb) == 'function' then
@@ -141,30 +141,44 @@ function Core.SavePlayers(cb)
   local startTime = GetGameTimer()
   local parameters = {}
 
-  for _, xPlayer in pairs(ESX.Players) do
-    updateHealthAndArmorInMetadata(xPlayer)
-    debugSaveLog('bulk', xPlayer)
+  local pending = {}
+  local pendingCount = 0
+  for _, xPlayer in pairs(xPlayers) do
+    pendingCount = pendingCount + 1
+    pending[pendingCount] = xPlayer
+  end
 
-    parameters[#parameters + 1] = {
-      --[[ accounts ]]
-      json.encode(xPlayer:getAccounts(true)),
-      --[[ job ]]
-      xPlayer.job.name,
-      --[[ job_grade ]]
-      xPlayer.job.grade,
-      --[[ group ]]
-      xPlayer.group,
-      --[[ position ]]
-      json.encode(xPlayer:getCoords(false, true)),
-      --[[ inventory ]]
-      json.encode(xPlayer:getInventory(true)),
-      --[[ loadout ]]
-      json.encode(xPlayer:getLoadout(true)),
-      --[[ metadata ]]
-      json.encode(xPlayer:getMeta()),
+  for i = 1, pendingCount do
+    local xPlayer = pending[i]
+    if not smooth or (ESX.Players[xPlayer.source] == xPlayer and GetPlayerPed(xPlayer.source) ~= 0) then
+      updateHealthAndArmorInMetadata(xPlayer)
+      debugSaveLog('bulk', xPlayer)
 
-      xPlayer.identifier,
-    }
+      parameters[#parameters + 1] = {
+        --[[ accounts ]]
+        json.encode(xPlayer:getAccounts(true)),
+        --[[ job ]]
+        xPlayer.job.name,
+        --[[ job_grade ]]
+        xPlayer.job.grade,
+        --[[ group ]]
+        xPlayer.group,
+        --[[ position ]]
+        json.encode(xPlayer:getCoords(false, true)),
+        --[[ inventory ]]
+        json.encode(xPlayer:getInventory(true)),
+        --[[ loadout ]]
+        json.encode(xPlayer:getLoadout(true)),
+        --[[ metadata ]]
+        json.encode(xPlayer:getMeta()),
+
+        xPlayer.identifier,
+      }
+    end
+
+    if smooth and i % 50 == 0 then
+      Wait(0)
+    end
   end
 
   executeSaveBatches(parameters, function(success)
@@ -259,7 +273,7 @@ function ESX.GetNumPlayers(key, val)
 
     local filteredPlayers = ESX.GetExtendedPlayers(key, val)
     for i, v in pairs(filteredPlayers) do
-      numPlayers[i] = (#v or 0)
+      numPlayers[i] = #v
     end
     return numPlayers
   end

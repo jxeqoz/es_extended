@@ -126,8 +126,7 @@ end)
   local playerId = source
   local sourceXPlayer = ESX.GetPlayerFromId(playerId)
   local targetXPlayer = ESX.GetPlayerFromId(target)
-  local distance = #(GetEntityCoords(GetPlayerPed(playerId)) - GetEntityCoords(GetPlayerPed(target)))
-  if not sourceXPlayer or not targetXPlayer or distance > public.distance_give then
+  if not sourceXPlayer or not targetXPlayer or #(GetEntityCoords(GetPlayerPed(playerId)) - GetEntityCoords(GetPlayerPed(target))) > public.distance_give then
     lib.print.warn(('[^3WARNING^7] Player Detected Cheating: ^5%s^7'):format(GetPlayerName(playerId)))
     return
   end

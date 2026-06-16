@@ -43,7 +43,7 @@ local function StartDBSync()
     local interval = 5 * 60 * 1000
     while true do
       Wait(interval)
-      Core.SavePlayers()
+      Core.SavePlayers(nil, true)
     end
   end)
 end

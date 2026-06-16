@@ -53,12 +53,6 @@ function ExtendedPlayer:getInventoryItem(name)
     return self.inventory[name]
   end
 
-  for _, v in ipairs(self.inventory) do
-    if v.name == name then
-      return v
-    end
-  end
-
   return nil
 end
 

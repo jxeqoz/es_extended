@@ -155,6 +155,13 @@ local GetVehicleWindowTint = function(vehicle)
   return tint ~= -1 and tint or nil
 end
 
+local tyresIndex = {
+  ['2'] = { 0, 4 },
+  ['3'] = { 0, 1, 4, 5 },
+  ['4'] = { 0, 1, 4, 5 },
+  ['6'] = { 0, 1, 2, 3, 4, 5 },
+}
+
 ---@param vehicle integer The vehicle to get the properties of
 ---@return table | nil
 function ESX.Game.GetVehicleProperties(vehicle)
@@ -188,13 +195,6 @@ function ESX.Game.GetVehicleProperties(vehicle)
   local someDoorsBroken, someWindowsBroken, someTyreBurst, someNeonEnabled = false, false, false, false
   local doorsBroken, windowsBroken, tyreBurst = {}, {}, {}
   local numWheels = tostring(GetVehicleNumberOfWheels(vehicle))
-
-  local tyresIndex = {
-    ['2'] = { 0, 4 },
-    ['3'] = { 0, 1, 4, 5 },
-    ['4'] = { 0, 1, 4, 5 },
-    ['6'] = { 0, 1, 2, 3, 4, 5 },
-  }
   if tyresIndex[numWheels] then
     for _, idx in pairs(tyresIndex[numWheels]) do
       local state = not not IsVehicleTyreBurst(vehicle, idx, false)

@@ -64,9 +64,9 @@ end
 function ESX.GetWeapon(weaponName)
   weaponName = string.upper(weaponName)
 
-  assert(weaponsByName[weaponName], 'Invalid weapon name!')
-
   local index = weaponsByName[weaponName]
+  assert(index, 'Invalid weapon name!')
+
   return index, weapons.list[index]
 end
 
@@ -89,9 +89,9 @@ end
 function ESX.GetWeaponLabel(weaponName)
   weaponName = string.upper(weaponName)
 
-  assert(weaponsByName[weaponName], 'Invalid weapon name!')
-
   local index = weaponsByName[weaponName]
+  assert(index, 'Invalid weapon name!')
+
   return weapons.list[index].label or ''
 end
 
@@ -124,12 +124,7 @@ function ESX.DumpTable(table, nb)
   end
 
   if type(table) == 'table' then
-    local s = ''
-    for _ = 1, nb + 1, 1 do
-      s = s .. '    '
-    end
-
-    s = '{\n'
+    local s = '{\n'
     for k, v in pairs(table) do
       if type(k) ~= 'number' then
         k = '"' .. k .. '"'

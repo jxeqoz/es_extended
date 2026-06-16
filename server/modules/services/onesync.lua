@@ -319,13 +319,15 @@ end
 
 local function getNearbyEntities(entities, coords, modelFilter, maxDistance, isPed)
   local nearbyEntities = {}
+  local count = 0
   coords = type(coords) == 'number' and GetEntityCoords(GetPlayerPed(coords)) or vector3(coords.x, coords.y, coords.z)
   for _, entity in pairs(entities) do
     if not isPed or (isPed and not IsPedAPlayer(entity)) then
       if not modelFilter or modelFilter[GetEntityModel(entity)] then
         local entityCoords = GetEntityCoords(entity)
         if not maxDistance or #(coords - entityCoords) <= maxDistance then
-          nearbyEntities[#nearbyEntities + 1] = NetworkGetNetworkIdFromEntity(entity)
+          count = count + 1
+          nearbyEntities[count] = NetworkGetNetworkIdFromEntity(entity)
         end
       end
     end
